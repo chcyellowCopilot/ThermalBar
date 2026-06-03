@@ -1,4 +1,5 @@
 # ThermalBar
+# ByCodex
 
 ThermalBar is a personal macOS menu bar monitor for Apple Silicon Macs. It reads thermal and power telemetry from a root LaunchDaemon helper and displays the latest status in a SwiftUI `MenuBarExtra`.
 
