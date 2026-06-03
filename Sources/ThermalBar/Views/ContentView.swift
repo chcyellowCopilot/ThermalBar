@@ -21,6 +21,7 @@ struct ContentView: View {
                 StatCard(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
                 StatCard(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))
                 StatCard(title: "CPU 使用率", value: Formatters.percent(store.cpuUsagePercent))
+                StatCard(title: "CPU 温度", value: Formatters.temperature(store.status?.cpuTemperatureC))
                 StatCard(title: "热压力", value: store.status?.thermalPressure ?? "—")
                 StatCard(title: "CPU 功耗", value: Formatters.power(store.status?.cpuPowerW))
                 StatCard(title: "GPU 功耗", value: Formatters.power(store.status?.gpuPowerW))

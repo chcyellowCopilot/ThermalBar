@@ -212,7 +212,14 @@ def fan_rpm(text):
 
 def smc_fan_metrics():
     if not os.path.exists(SMC_READER_PATH):
-        return {"fanRPM": None, "fanCount": None, "fanReadout": None, "fanError": "SMC reader not installed"}
+        return {
+            "fanRPM": None,
+            "fanCount": None,
+            "fanReadout": None,
+            "fanError": "SMC reader not installed",
+            "cpuTemperatureC": None,
+            "cpuTemperatureReadout": None,
+        }
     result = run([SMC_READER_PATH], 5)
     text = result.stdout.strip()
     try:
@@ -227,6 +234,10 @@ def smc_fan_metrics():
         "fanCount": payload.get("fanCount"),
         "fanReadout": fans,
         "fanError": payload.get("error") or (result.stderr.strip() if result.returncode != 0 else None),
+        "cpuTemperatureC": round(payload["cpuTemperatureC"], 2)
+        if isinstance(payload.get("cpuTemperatureC"), (int, float))
+        else None,
+        "cpuTemperatureReadout": payload.get("cpuTemperatureReadout"),
     }
 
 
@@ -249,11 +260,13 @@ def main():
         "thermalPressure": None,
         "batteryTemperatureC": None,
         "virtualTemperatureC": None,
+        "cpuTemperatureC": None,
         "systemPowerW": None,
         "fanRPM": None,
         "fanCount": None,
         "fanReadout": None,
         "fanError": None,
+        "cpuTemperatureReadout": None,
         "networkInterface": None,
         "networkRxBytes": None,
         "networkTxBytes": None,

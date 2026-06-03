@@ -2,6 +2,7 @@ import Foundation
 
 enum MenuBarMetric: String, CaseIterable, Identifiable {
     case cpuUsage
+    case cpuTemperature
     case batteryTemperature
     case virtualTemperature
     case systemPower
@@ -19,6 +20,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         switch self {
         case .cpuUsage:
             "CPU 使用率"
+        case .cpuTemperature:
+            "CPU 温度"
         case .batteryTemperature:
             "电池温度"
         case .virtualTemperature:
@@ -46,6 +49,8 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         switch self {
         case .cpuUsage:
             46
+        case .cpuTemperature:
+            30
         case .batteryTemperature, .virtualTemperature:
             30
         case .systemPower:

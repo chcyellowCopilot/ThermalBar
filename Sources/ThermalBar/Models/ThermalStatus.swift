@@ -7,6 +7,7 @@ struct ThermalStatus: Codable, Equatable {
     let thermalPressure: String?
     let batteryTemperatureC: Double?
     let virtualTemperatureC: Double?
+    let cpuTemperatureC: Double?
     let systemPowerW: Double?
     let fanRPM: Double?
     let networkInterface: String?

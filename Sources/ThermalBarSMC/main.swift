@@ -1,5 +1,26 @@
 import Foundation
 import IOKit
+import IOKit.hidsystem
+
+typealias IOHIDEventRef = CFTypeRef
+
+@_silgen_name("IOHIDEventSystemClientCreateWithType")
+private func IOHIDEventSystemClientCreateWithType(
+    _ allocator: CFAllocator?,
+    _ type: Int32,
+    _ options: CFDictionary?
+) -> IOHIDEventSystemClient
+
+@_silgen_name("IOHIDServiceClientCopyEvent")
+private func IOHIDServiceClientCopyEvent(
+    _ service: IOHIDServiceClient,
+    _ type: Int64,
+    _ matching: CFDictionary?,
+    _ options: UInt32
+) -> IOHIDEventRef?
+
+@_silgen_name("IOHIDEventGetFloatValue")
+private func IOHIDEventGetFloatValue(_ event: IOHIDEventRef, _ field: Int32) -> Double
 
 private enum SMCCommand: UInt8 {
     case kernelIndex = 2
@@ -108,7 +129,7 @@ private final class ReadOnlySMC {
         IOServiceClose(connection)
     }
 
-    func readKey(_ key: String) throws -> (bytes: [UInt8], size: UInt32) {
+    func readKey(_ key: String) throws -> (bytes: [UInt8], size: UInt32, type: String) {
         var info = SMCParamStruct()
         info.key = try fourCharCode(key)
         info.data8 = SMCCommand.readKeyInfo.rawValue
@@ -125,7 +146,7 @@ private final class ReadOnlySMC {
         let bytes = withUnsafeBytes(of: readOut.bytes) {
             Array($0.prefix(Int(infoOut.keyInfo.dataSize)))
         }
-        return (bytes, infoOut.keyInfo.dataSize)
+        return (bytes, infoOut.keyInfo.dataSize, fourCharString(infoOut.keyInfo.dataType))
     }
 
     private func call(_ input: SMCParamStruct) throws -> SMCParamStruct {
@@ -159,6 +180,16 @@ private final class ReadOnlySMC {
         }
         return bytes.reduce(0) { ($0 << 8) | UInt32($1) }
     }
+
+    private func fourCharString(_ code: UInt32) -> String {
+        let bytes = [
+            UInt8((code >> 24) & 0xff),
+            UInt8((code >> 16) & 0xff),
+            UInt8((code >> 8) & 0xff),
+            UInt8(code & 0xff),
+        ]
+        return String(bytes: bytes, encoding: .ascii) ?? ""
+    }
 }
 
 private func uint8(_ bytes: [UInt8]) -> UInt8? {
@@ -174,6 +205,60 @@ private func rpmValue(bytes: [UInt8], size: UInt32) -> Double? {
         return Double(raw) / 4.0
     }
     return nil
+}
+
+private func temperatureValue(bytes: [UInt8], size: UInt32, type: String) -> Double? {
+    let value: Double?
+    if type == "sp78", bytes.count >= 2 {
+        value = Double(Int8(bitPattern: bytes[0])) + Double(bytes[1]) / 256.0
+    } else if type == "flt ", size == 4, bytes.count >= 4 {
+        value = Double(bytes.withUnsafeBytes { $0.loadUnaligned(as: Float.self) })
+    } else if bytes.count >= 2 {
+        let raw = UInt16(bigEndian: bytes.withUnsafeBytes { $0.loadUnaligned(as: UInt16.self) })
+        value = Double(raw) / 256.0
+    } else {
+        value = nil
+    }
+
+    guard let value, value >= 0, value <= 130 else {
+        return nil
+    }
+    return value
+}
+
+private func hidDieTemperatures() -> [[String: Any]] {
+    let temperatureEventType = 15
+    let temperatureField = Int32(temperatureEventType << 16)
+    let clientTypes: [Int32] = [1, 3]
+    var readings: [[String: Any]] = []
+    var seenProducts = Set<String>()
+
+    for clientType in clientTypes {
+        let client = IOHIDEventSystemClientCreateWithType(kCFAllocatorDefault, clientType, nil)
+        guard let services = IOHIDEventSystemClientCopyServices(client) as? [IOHIDServiceClient] else {
+            continue
+        }
+
+        for service in services where IOHIDServiceClientConformsTo(service, 65280, 5) != 0 {
+            guard let product = IOHIDServiceClientCopyProperty(service, "Product" as CFString) as? String,
+                  product.range(of: #"^PMU2? tdie\d+$"#, options: .regularExpression) != nil,
+                  !seenProducts.contains(product),
+                  let event = IOHIDServiceClientCopyEvent(service, Int64(temperatureEventType), nil, 0)
+            else {
+                continue
+            }
+
+            let temperature = IOHIDEventGetFloatValue(event, temperatureField)
+            guard temperature >= 0, temperature <= 130 else {
+                continue
+            }
+
+            seenProducts.insert(product)
+            readings.append(["key": product, "temperatureC": temperature])
+        }
+    }
+
+    return readings
 }
 
 private func json(_ object: Any) throws -> String {
@@ -197,9 +282,32 @@ do {
         }
     }
 
-    print(try json(["fanCount": fanCount, "fans": fans]))
+    let cpuTemperatureKeys = [
+        "TC0P", "TC0E", "TC0F", "TC0H", "TC0D",
+        "TC1P", "TC1E", "TC1F", "TC1H", "TC1D",
+        "TC2P", "TC2E", "TC2F", "TC2H", "TC2D",
+    ]
+    var cpuTemperatures: [[String: Any]] = []
+    for key in cpuTemperatureKeys {
+        if let reading = try? smc.readKey(key),
+           let temperature = temperatureValue(bytes: reading.bytes, size: reading.size, type: reading.type) {
+            cpuTemperatures.append(["key": key, "temperatureC": temperature])
+        }
+    }
+    cpuTemperatures.append(contentsOf: hidDieTemperatures())
+
+    let cpuTemperature = cpuTemperatures
+        .compactMap { $0["temperatureC"] as? Double }
+        .max()
+
+    print(try json([
+        "fanCount": fanCount,
+        "fans": fans,
+        "cpuTemperatureC": cpuTemperature.map { $0 as Any } ?? NSNull(),
+        "cpuTemperatureReadout": cpuTemperatures,
+    ]))
 } catch {
     let message = (error as? LocalizedError)?.errorDescription ?? String(describing: error)
-    print(try json(["fanCount": 0, "fans": [], "error": message]))
+    print(try json(["fanCount": 0, "fans": [], "cpuTemperatureC": NSNull(), "cpuTemperatureReadout": [], "error": message]))
     exit(1)
 }

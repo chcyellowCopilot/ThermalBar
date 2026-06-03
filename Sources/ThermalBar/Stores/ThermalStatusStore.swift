@@ -107,6 +107,8 @@ final class ThermalStatusStore {
         switch metric {
         case .cpuUsage:
             return valueOrNil(Formatters.percent(cpuUsagePercent)).map { "CPU \($0)" }
+        case .cpuTemperature:
+            return valueOrNil(Formatters.temperature(status?.cpuTemperatureC)).map { "CPU \($0)" }
         case .batteryTemperature:
             return valueOrNil(Formatters.temperature(status?.batteryTemperatureC))
         case .virtualTemperature:
@@ -134,6 +136,8 @@ final class ThermalStatusStore {
         switch metric {
         case .cpuUsage:
             return valueOrNil(Formatters.percent(cpuUsagePercent)).flatMap { fixed("CPU \($0)", width: 7) }
+        case .cpuTemperature:
+            return valueOrNil(Formatters.temperature(status?.cpuTemperatureC)).flatMap { fixed("CPU \($0)", width: 7) }
         case .batteryTemperature:
             return fixed(Formatters.temperature(status?.batteryTemperatureC), width: 4)
         case .virtualTemperature:
