@@ -38,6 +38,7 @@ struct MenuBarView: View {
             MetricRow(title: "风扇转速", value: Formatters.fanSpeed(store.status?.fanRPM))
             MetricRow(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
             MetricRow(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))
+            MetricRow(title: "CPU 使用率", value: Formatters.percent(store.cpuUsagePercent))
             MetricRow(title: "CPU", value: Formatters.power(store.status?.cpuPowerW))
             MetricRow(title: "GPU", value: Formatters.power(store.status?.gpuPowerW))
             MetricRow(title: "ANE", value: Formatters.power(store.status?.anePowerW))

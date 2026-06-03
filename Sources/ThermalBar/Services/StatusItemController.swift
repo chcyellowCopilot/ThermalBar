@@ -93,8 +93,6 @@ final class StatusItemController: NSObject {
     }
 
     private func update(title: String, symbol: String, width: Double) {
-        statusItem.length = width + 10
-
         guard let button = statusItem.button else {
             return
         }
@@ -104,7 +102,7 @@ final class StatusItemController: NSObject {
         button.image = image
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = .center
-        button.attributedTitle = NSAttributedString(
+        let attributedTitle = NSAttributedString(
             string: title,
             attributes: [
                 .font: NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular),
@@ -112,6 +110,10 @@ final class StatusItemController: NSObject {
                 .paragraphStyle: paragraphStyle,
             ]
         )
+        button.attributedTitle = attributedTitle
+        let measuredTitleWidth = ceil(attributedTitle.size().width)
+        let imageWidth = image?.size.width ?? 0
+        statusItem.length = max(width + 10, measuredTitleWidth + imageWidth + 24)
     }
 
     private func showDetailsWindow() {

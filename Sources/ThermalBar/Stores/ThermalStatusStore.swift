@@ -12,6 +12,7 @@ final class ThermalStatusStore {
     var networkInterface: String?
     var networkDownloadBps: Double?
     var networkUploadBps: Double?
+    var cpuUsagePercent: Double?
     var menuBarMetricIDs: [String]
     var menuBarTitle = "温度监控"
     var statusBarTitle = "温度监控"
@@ -34,10 +35,16 @@ final class ThermalStatusStore {
     private let networkSampler = NetworkSpeedSampler()
 
     @ObservationIgnored
+    private let cpuSampler = CPUUsageSampler()
+
+    @ObservationIgnored
     private var statusTimer: Timer?
 
     @ObservationIgnored
     private var networkTimer: Timer?
+
+    @ObservationIgnored
+    private var cpuTimer: Timer?
 
     @ObservationIgnored
     private var wakeObserver: NSObjectProtocol?
@@ -47,8 +54,10 @@ final class ThermalStatusStore {
             ?? MenuBarMetric.defaultSelection.map(\.rawValue)
         refresh()
         updateNetworkSpeed()
+        updateCPUUsage()
         startStatusTimer()
         startNetworkTimer()
+        startCPUTimer()
         observeWake()
     }
 
@@ -96,6 +105,8 @@ final class ThermalStatusStore {
 
     func menuBarValue(for metric: MenuBarMetric) -> String? {
         switch metric {
+        case .cpuUsage:
+            return valueOrNil(Formatters.percent(cpuUsagePercent)).map { "CPU \($0)" }
         case .batteryTemperature:
             return valueOrNil(Formatters.temperature(status?.batteryTemperatureC))
         case .virtualTemperature:
@@ -121,6 +132,8 @@ final class ThermalStatusStore {
 
     func statusBarValue(for metric: MenuBarMetric) -> String? {
         switch metric {
+        case .cpuUsage:
+            return valueOrNil(Formatters.percent(cpuUsagePercent)).flatMap { fixed("CPU \($0)", width: 7) }
         case .batteryTemperature:
             return fixed(Formatters.temperature(status?.batteryTemperatureC), width: 4)
         case .virtualTemperature:
@@ -258,6 +271,21 @@ final class ThermalStatusStore {
         networkTimer?.tolerance = 0.1
     }
 
+    private func updateCPUUsage() {
+        cpuUsagePercent = cpuSampler.sample().usagePercent
+        rebuildMenuBarTitle()
+    }
+
+    private func startCPUTimer() {
+        cpuTimer?.invalidate()
+        cpuTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateCPUUsage()
+            }
+        }
+        cpuTimer?.tolerance = 0.1
+    }
+
     private func observeWake() {
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
@@ -266,8 +294,10 @@ final class ThermalStatusStore {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.networkSampler.reset()
+                self?.cpuSampler.reset()
                 self?.refresh()
                 self?.updateNetworkSpeed()
+                self?.updateCPUUsage()
             }
         }
     }

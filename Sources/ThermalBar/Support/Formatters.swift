@@ -16,6 +16,11 @@ enum Formatters {
         return "\(Int(value.rounded())) RPM"
     }
 
+    static func percent(_ value: Double?) -> String {
+        guard let value else { return "—" }
+        return "\(Int(value.rounded()))%"
+    }
+
     static func networkSpeed(_ value: Double?) -> String {
         guard let value else { return "—" }
         let units = ["B/s", "KB/s", "MB/s", "GB/s"]
