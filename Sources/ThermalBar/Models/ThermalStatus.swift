@@ -36,13 +36,13 @@ enum HelperState: Equatable {
     var title: String {
         switch self {
         case .notInstalled:
-            "辅助服务未安装"
+            "采集程序未找到"
         case .stale:
             "数据已过期"
         case .running:
-            "运行中"
+            "本机采集中"
         case .failed:
-            "辅助服务错误"
+            "采集错误"
         }
     }
 }

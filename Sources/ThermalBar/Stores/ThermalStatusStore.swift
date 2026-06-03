@@ -26,10 +26,7 @@ final class ThermalStatusStore {
     private let menuBarMetricIDsKey = "menuBarMetricIDs"
 
     @ObservationIgnored
-    private let reader = StatusFileReader()
-
-    @ObservationIgnored
-    private let helper = HelperManager()
+    private let reader = LocalSensorReader()
 
     @ObservationIgnored
     private let networkSampler = NetworkSpeedSampler()
@@ -91,10 +88,6 @@ final class ThermalStatusStore {
         if helperState == .stale {
             return "clock.badge.exclamationmark"
         }
-        if let pressure = status?.thermalPressure?.lowercased(),
-           pressure.contains("serious") || pressure.contains("critical") || pressure.contains("heavy") {
-            return "thermometer.high"
-        }
         return "thermometer.medium"
     }
 
@@ -113,22 +106,12 @@ final class ThermalStatusStore {
             return valueOrNil(Formatters.temperature(status?.batteryTemperatureC))
         case .virtualTemperature:
             return valueOrNil(Formatters.temperature(status?.virtualTemperatureC))
-        case .systemPower:
-            return valueOrNil(Formatters.power(status?.systemPowerW))
         case .fanSpeed:
             return valueOrNil(Formatters.fanSpeed(status?.fanRPM))
         case .downloadSpeed:
             return valueOrNil(Formatters.networkSpeed(networkDownloadBps)).map { "↓\($0)" }
         case .uploadSpeed:
             return valueOrNil(Formatters.networkSpeed(networkUploadBps)).map { "↑\($0)" }
-        case .cpuPower:
-            return valueOrNil(Formatters.power(status?.cpuPowerW)).map { "CPU \($0)" }
-        case .gpuPower:
-            return valueOrNil(Formatters.power(status?.gpuPowerW)).map { "GPU \($0)" }
-        case .anePower:
-            return valueOrNil(Formatters.power(status?.anePowerW)).map { "ANE \($0)" }
-        case .thermalPressure:
-            return status?.thermalPressure
         }
     }
 
@@ -142,22 +125,12 @@ final class ThermalStatusStore {
             return fixed(Formatters.temperature(status?.batteryTemperatureC), width: 4)
         case .virtualTemperature:
             return fixed(Formatters.temperature(status?.virtualTemperatureC), width: 4)
-        case .systemPower:
-            return fixed(Formatters.power(status?.systemPowerW), width: 6)
         case .fanSpeed:
             return fixed(Formatters.fanSpeed(status?.fanRPM), width: 8)
         case .downloadSpeed:
             return Formatters.statusBarNetworkSpeed(networkDownloadBps)
         case .uploadSpeed:
             return Formatters.statusBarNetworkSpeedUp(networkUploadBps)
-        case .cpuPower:
-            return valueOrNil(Formatters.power(status?.cpuPowerW)).flatMap { fixed("CPU \($0)", width: 9) }
-        case .gpuPower:
-            return valueOrNil(Formatters.power(status?.gpuPowerW)).flatMap { fixed("GPU \($0)", width: 9) }
-        case .anePower:
-            return valueOrNil(Formatters.power(status?.anePowerW)).flatMap { fixed("ANE \($0)", width: 9) }
-        case .thermalPressure:
-            return status?.thermalPressure.flatMap { fixed($0, width: 8) }
         }
     }
 
@@ -219,32 +192,16 @@ final class ThermalStatusStore {
             rebuildMenuBarTitle()
         }
 
-        switch reader.readStatus() {
-        case .success(let newStatus):
-            status = newStatus
-            lastReadError = nil
-            if !helper.isInstalled {
-                helperState = .notInstalled
-            } else if newStatus.isError {
-                helperState = .failed(newStatus.error ?? "Unknown helper error")
-            } else if Date().timeIntervalSince(newStatus.timestamp) > Double(max(sampleIntervalSeconds * 3, 15)) {
-                helperState = .stale
-            } else {
-                helperState = .running
-            }
-        case .failure(let error):
-            status = nil
-            lastReadError = error.localizedDescription
-            helperState = helper.isInstalled ? .stale : .notInstalled
+        let newStatus = reader.readStatus()
+        status = newStatus
+        lastReadError = nil
+        if newStatus.error == "ThermalBarSMC not found" {
+            helperState = .notInstalled
+        } else if newStatus.isError {
+            helperState = .failed(newStatus.error ?? "Unknown local reader error")
+        } else {
+            helperState = .running
         }
-    }
-
-    func installHelper() {
-        helper.runPrivilegedScript(named: "install_helper.sh")
-    }
-
-    func uninstallHelper() {
-        helper.runPrivilegedScript(named: "uninstall_helper.sh")
     }
 
     private func updateNetworkSpeed() {

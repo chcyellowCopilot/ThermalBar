@@ -6,7 +6,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("采样") {
-                Picker("温度/功耗/风扇", selection: Binding(
+                Picker("温度/风扇", selection: Binding(
                     get: { store.sampleIntervalSeconds },
                     set: { store.setSampleInterval($0) }
                 )) {
@@ -43,12 +43,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("辅助服务") {
-                LabeledContent("状态文件") {
-                    Text("/var/tmp/thermalbar/status.json")
-                        .textSelection(.enabled)
-                }
-
+            Section("本机采集") {
                 LabeledContent("状态") {
                     Text(store.helperState.title)
                 }

@@ -23,6 +23,7 @@ final class StatusItemController: NSObject {
                 openSettingsAction: { [weak self] in self?.showSettingsWindow() }
             )
         )
+        popover.contentViewController?.view.appearance = NSAppearance(named: .aqua)
 
         if let button = statusItem.button {
             button.target = self
@@ -54,7 +55,9 @@ final class StatusItemController: NSObject {
         if popover.isShown {
             closePopover()
         } else {
+            NSApp.activate(ignoringOtherApps: true)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKeyAndOrderFront(nil)
             startGlobalMonitor()
         }
     }
@@ -135,8 +138,7 @@ final class StatusItemController: NSObject {
             detailsWindow = window
         }
 
-        detailsWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        presentWindow(detailsWindow)
     }
 
     private func showSettingsWindow() {
@@ -159,7 +161,23 @@ final class StatusItemController: NSObject {
             settingsWindow = window
         }
 
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        presentWindow(settingsWindow)
+    }
+
+    private func presentWindow(_ window: NSWindow?) {
+        guard let window else {
+            return
+        }
+
         NSApp.activate(ignoringOtherApps: true)
+        window.orderFrontRegardless()
+        window.makeKeyAndOrderFront(nil)
+        window.makeMain()
+
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            window.makeMain()
+        }
     }
 }

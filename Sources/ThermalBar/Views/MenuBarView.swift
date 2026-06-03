@@ -18,6 +18,7 @@ struct MenuBarView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(width: 260)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var header: some View {
@@ -34,16 +35,11 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 2) {
             MetricRow(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
             MetricRow(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
-            MetricRow(title: "系统功耗", value: Formatters.power(store.status?.systemPowerW))
             MetricRow(title: "风扇转速", value: Formatters.fanSpeed(store.status?.fanRPM))
             MetricRow(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
             MetricRow(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))
             MetricRow(title: "CPU 使用率", value: Formatters.percent(store.cpuUsagePercent))
             MetricRow(title: "CPU 温度", value: Formatters.temperature(store.status?.cpuTemperatureC))
-            MetricRow(title: "CPU", value: Formatters.power(store.status?.cpuPowerW))
-            MetricRow(title: "GPU", value: Formatters.power(store.status?.gpuPowerW))
-            MetricRow(title: "ANE", value: Formatters.power(store.status?.anePowerW))
-            MetricRow(title: "热压力", value: store.status?.thermalPressure ?? "—")
         }
     }
 
@@ -59,12 +55,6 @@ struct MenuBarView: View {
             }
             Button("立即刷新") {
                 store.refresh()
-            }
-            Button("安装辅助服务") {
-                store.installHelper()
-            }
-            Button("卸载辅助服务") {
-                store.uninstallHelper()
             }
             Button("设置") {
                 if let openSettingsAction {

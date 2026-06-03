@@ -16,22 +16,18 @@ struct ContentView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 StatCard(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
                 StatCard(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
-                StatCard(title: "系统功耗", value: Formatters.power(store.status?.systemPowerW))
                 StatCard(title: "风扇转速", value: Formatters.fanSpeed(store.status?.fanRPM))
                 StatCard(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
                 StatCard(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))
                 StatCard(title: "CPU 使用率", value: Formatters.percent(store.cpuUsagePercent))
                 StatCard(title: "CPU 温度", value: Formatters.temperature(store.status?.cpuTemperatureC))
-                StatCard(title: "热压力", value: store.status?.thermalPressure ?? "—")
-                StatCard(title: "CPU 功耗", value: Formatters.power(store.status?.cpuPowerW))
-                StatCard(title: "GPU 功耗", value: Formatters.power(store.status?.gpuPowerW))
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("原始摘要")
                     .font(.headline)
                 ScrollView {
-                    Text(store.status?.rawSummary ?? store.lastReadError ?? "暂无辅助服务数据。")
+                    Text(store.status?.rawSummary ?? store.lastReadError ?? "暂无采集数据。")
                         .font(.system(.caption, design: .monospaced))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)

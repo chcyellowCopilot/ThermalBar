@@ -26,11 +26,7 @@ rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
-cp "$ROOT_DIR/helper/install_helper.sh" "$APP_RESOURCES/install_helper.sh"
-cp "$ROOT_DIR/helper/uninstall_helper.sh" "$APP_RESOURCES/uninstall_helper.sh"
-cp "$ROOT_DIR/helper/thermalbar-helper.py" "$APP_RESOURCES/thermalbar-helper.py"
 cp "$SMC_BINARY" "$APP_RESOURCES/ThermalBarSMC"
-chmod +x "$APP_RESOURCES/"*.sh "$APP_RESOURCES/thermalbar-helper.py"
 chmod +x "$APP_RESOURCES/ThermalBarSMC"
 
 cat >"$INFO_PLIST" <<PLIST

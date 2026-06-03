@@ -1,7 +1,7 @@
 # ThermalBar
 # ByCodex
 
-ThermalBar is a personal macOS menu bar monitor for Apple Silicon Macs. It reads thermal and power telemetry from a root LaunchDaemon helper and displays the latest status in a SwiftUI `MenuBarExtra`.
+ThermalBar is a personal macOS menu bar monitor for Apple Silicon Macs. It reads local temperature, fan speed, network speed, and CPU usage telemetry directly from the app bundle and displays the latest status in a SwiftUI `MenuBarExtra`.
 
 ## Build and Run
 
@@ -9,19 +9,13 @@ ThermalBar is a personal macOS menu bar monitor for Apple Silicon Macs. It reads
 ./script/build_and_run.sh
 ```
 
-## Helper
+## Telemetry
 
-Use the menu bar item to install or uninstall the helper. macOS will ask for administrator authorization. The app does not store sudo passwords.
+ThermalBar does not require a privileged helper or LaunchDaemon.
 
-The helper writes:
+Current data sources:
 
-```text
-/var/tmp/thermalbar/status.json
-```
-
-It installs:
-
-```text
-/Library/LaunchDaemons/com.local.thermalbar.helper.plist
-/Library/Application Support/ThermalBar/thermalbar-helper.py
-```
+- CPU temperature and fan speed: bundled `ThermalBarSMC`
+- Battery and virtual temperature: `ioreg`
+- CPU usage: host processor tick deltas
+- Network speed: local network counters
