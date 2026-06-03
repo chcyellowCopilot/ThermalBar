@@ -33,8 +33,10 @@ struct MenuBarView: View {
 
     private var metricRows: some View {
         VStack(alignment: .leading, spacing: 2) {
-            MetricRow(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
-            MetricRow(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
+            if store.status?.hasBattery != false {
+                MetricRow(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
+                MetricRow(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
+            }
             MetricRow(title: "风扇转速", value: Formatters.fanSpeed(store.status?.fanRPM))
             MetricRow(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
             MetricRow(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))

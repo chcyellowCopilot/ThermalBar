@@ -10,6 +10,7 @@ struct LocalSensorReader {
             schemaVersion: 1,
             timestamp: Date(),
             source: "thermalbar-local",
+            hasBattery: battery.hasBattery,
             thermalPressure: nil,
             batteryTemperatureC: battery.batteryTemperatureC,
             virtualTemperatureC: battery.virtualTemperatureC,
@@ -27,9 +28,16 @@ struct LocalSensorReader {
         )
     }
 
-    private func batteryMetrics() -> (batteryTemperatureC: Double?, virtualTemperatureC: Double?) {
+    private func batteryMetrics() -> (hasBattery: Bool, batteryTemperatureC: Double?, virtualTemperatureC: Double?) {
         let result = run("/usr/sbin/ioreg", arguments: ["-r", "-n", "AppleSmartBattery", "-d", "1"], timeout: 5)
+        let hasBattery = !result.output.contains("\"BatteryInstalled\" = No")
+            && (
+                result.output.contains("\"BatteryInstalled\" = Yes")
+                || result.output.contains("\"Temperature\"")
+                || result.output.contains("\"VirtualTemperature\"")
+            )
         return (
+            hasBattery,
             scaledInt(named: "Temperature", in: result.output, scale: 100),
             scaledInt(named: "VirtualTemperature", in: result.output, scale: 100)
         )

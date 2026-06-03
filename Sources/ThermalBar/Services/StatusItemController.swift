@@ -114,9 +114,7 @@ final class StatusItemController: NSObject {
             ]
         )
         button.attributedTitle = attributedTitle
-        let measuredTitleWidth = ceil(attributedTitle.size().width)
-        let imageWidth = image?.size.width ?? 0
-        statusItem.length = max(width + 10, measuredTitleWidth + imageWidth + 24)
+        statusItem.length = max(72, width + 34)
     }
 
     private func showDetailsWindow() {

@@ -4,6 +4,7 @@ struct ThermalStatus: Codable, Equatable {
     let schemaVersion: Int
     let timestamp: Date
     let source: String
+    let hasBattery: Bool
     let thermalPressure: String?
     let batteryTemperatureC: Double?
     let virtualTemperatureC: Double?

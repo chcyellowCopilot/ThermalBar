@@ -48,4 +48,13 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
     static let defaultSelection: [MenuBarMetric] = [
         .batteryTemperature,
     ]
+
+    func isAvailable(for status: ThermalStatus?) -> Bool {
+        switch self {
+        case .batteryTemperature, .virtualTemperature:
+            status?.hasBattery != false
+        case .cpuUsage, .cpuTemperature, .fanSpeed, .downloadSpeed, .uploadSpeed:
+            true
+        }
+    }
 }

@@ -24,7 +24,7 @@ struct SettingsView: View {
             }
 
             Section("状态栏显示") {
-                ForEach(MenuBarMetric.allCases) { metric in
+                ForEach(store.availableMenuBarMetrics) { metric in
                     Toggle(metric.title, isOn: Binding(
                         get: { store.isMenuBarMetricSelected(metric) },
                         set: { store.setMenuBarMetric(metric, enabled: $0) }

@@ -14,8 +14,10 @@ struct ContentView: View {
             }
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatCard(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
-                StatCard(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
+                if store.status?.hasBattery != false {
+                    StatCard(title: "电池温度", value: Formatters.temperature(store.status?.batteryTemperatureC))
+                    StatCard(title: "虚拟温度", value: Formatters.temperature(store.status?.virtualTemperatureC))
+                }
                 StatCard(title: "风扇转速", value: Formatters.fanSpeed(store.status?.fanRPM))
                 StatCard(title: "下载速度", value: Formatters.networkSpeed(store.networkDownloadBps))
                 StatCard(title: "上传速度", value: Formatters.networkSpeed(store.networkUploadBps))

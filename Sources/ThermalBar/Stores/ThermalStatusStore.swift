@@ -59,7 +59,13 @@ final class ThermalStatusStore {
     }
 
     var selectedMenuBarMetrics: [MenuBarMetric] {
-        menuBarMetricIDs.compactMap(MenuBarMetric.init(rawValue:))
+        menuBarMetricIDs
+            .compactMap(MenuBarMetric.init(rawValue:))
+            .filter { $0.isAvailable(for: status) }
+    }
+
+    var availableMenuBarMetrics: [MenuBarMetric] {
+        MenuBarMetric.allCases.filter { $0.isAvailable(for: status) }
     }
 
     func isMenuBarMetricSelected(_ metric: MenuBarMetric) -> Bool {
